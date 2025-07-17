@@ -1,7 +1,6 @@
-using ConfigurableWorkflowEngine.Models.Entities;
+using ConfigurableWorkflowEngine.Features.WorkflowInstances;
 using ConfigurableWorkflowEngine.Models.Requests;
-using ConfigurableWorkflowEngine.Models.Responses;
-using ConfigurableWorkflowEngine.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ConfigurableWorkflowEngine.Endpoints;
 
@@ -13,70 +12,28 @@ public static class WorkflowInstanceEndpoints
             .WithTags("Workflow Instances");
 
         // Create a new workflow instance
-        group.MapPost("/", CreateWorkflowInstance)
+        group.MapPost("/", async (CreateInstanceRequest request, [FromServices] Create.Handler handler) => 
+            await handler.HandleAsync(request))
             .WithName("CreateWorkflowInstance")
             .WithOpenApi();
 
         // Get a specific workflow instance
-        group.MapGet("/{id}", GetWorkflowInstance)
+        group.MapGet("/{id}", async (string id, [FromServices] GetById.Handler handler) => 
+            await handler.HandleAsync(id))
             .WithName("GetWorkflowInstance")
             .WithOpenApi();
 
         // Get all workflow instances
-        group.MapGet("/", GetAllWorkflowInstances)
+        group.MapGet("/", async ([FromServices] GetAll.Handler handler) => 
+            await handler.HandleAsync())
             .WithName("GetAllWorkflowInstances")
             .WithOpenApi();
 
         // Get instances by definition
-        app.MapGet("/api/workflows/definitions/{definitionId}/instances", GetInstancesByDefinition)
+        app.MapGet("/api/workflows/definitions/{definitionId}/instances", async (string definitionId, [FromServices] GetByDefinition.Handler handler) => 
+            await handler.HandleAsync(definitionId))
             .WithName("GetInstancesByDefinition")
             .WithTags("Workflow Instances")
             .WithOpenApi();
-    }
-
-    private static async Task<IResult> CreateWorkflowInstance(
-        CreateInstanceRequest request, 
-        IWorkflowService workflowService)
-    {
-        var (success, createdInstance, errors) = await workflowService.CreateInstanceAsync(request);
-        
-        if (success)
-        {
-            return Results.Created($"/api/workflows/instances/{createdInstance!.Id}", 
-                ApiResponse<WorkflowInstance>.Ok(createdInstance));
-        }
-        
-        return Results.BadRequest(ApiResponse<WorkflowInstance>.Fail(
-            $"Validation failed: {string.Join(", ", errors.Select(e => e.Message))}"));
-    }
-
-    private static async Task<IResult> GetWorkflowInstance(
-        string id, 
-        IWorkflowService workflowService)
-    {
-        var instance = await workflowService.GetInstanceAsync(id);
-        
-        if (instance == null)
-        {
-            return Results.NotFound(ApiResponse<WorkflowInstance>.Fail(
-                $"Workflow instance '{id}' not found"));
-        }
-        
-        return Results.Ok(ApiResponse<WorkflowInstance>.Ok(instance));
-    }
-
-    private static async Task<IResult> GetAllWorkflowInstances(
-        IWorkflowService workflowService)
-    {
-        var instances = await workflowService.GetAllInstancesAsync();
-        return Results.Ok(ApiResponse<IEnumerable<WorkflowInstance>>.Ok(instances));
-    }
-
-    private static async Task<IResult> GetInstancesByDefinition(
-        string definitionId, 
-        IWorkflowService workflowService)
-    {
-        var instances = await workflowService.GetInstancesByDefinitionAsync(definitionId);
-        return Results.Ok(ApiResponse<IEnumerable<WorkflowInstance>>.Ok(instances));
     }
 } 

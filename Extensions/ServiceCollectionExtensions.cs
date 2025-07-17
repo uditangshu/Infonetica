@@ -1,6 +1,7 @@
 using ConfigurableWorkflowEngine.Core.Interfaces;
 using ConfigurableWorkflowEngine.Infrastructure.Repositories;
 using ConfigurableWorkflowEngine.Services;
+using System.Reflection;
 
 namespace ConfigurableWorkflowEngine.Extensions;
 
@@ -8,13 +9,18 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddWorkflowServices(this IServiceCollection services)
     {
-        // Register repository
+        // Register core services
         services.AddSingleton<IWorkflowRepository, InMemoryWorkflowRepository>();
-        
-        // Register services
-        services.AddScoped<IWorkflowValidationService, WorkflowValidationService>();
         services.AddScoped<IWorkflowService, WorkflowService>();
-        
+        services.AddScoped<IWorkflowValidationService, WorkflowValidationService>();
+
+        // Register all handlers from the Features assembly
+        services.Scan(scan => scan
+            .FromAssembly(Assembly.GetExecutingAssembly())
+            .AddClasses(classes => classes.InNamespaces("ConfigurableWorkflowEngine.Features"))
+            .AsSelfWithInterfaces()
+            .WithScopedLifetime());
+
         return services;
     }
     
