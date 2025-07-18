@@ -6,18 +6,11 @@ namespace ConfigurableWorkflowEngine.Features.WorkflowDefinitions;
 
 public static class GetAll
 {
-    public class Handler
+    public class Handler(IWorkflowService workflowService)
     {
-        private readonly IWorkflowService _workflowService;
-
-        public Handler(IWorkflowService workflowService)
-        {
-            _workflowService = workflowService;
-        }
-
         public async Task<IResult> HandleAsync()
         {
-            var definitions = await _workflowService.GetAllDefinitionsAsync();
+            var definitions = await workflowService.GetAllDefinitionsAsync();
             return Results.Ok(ApiResponse<IEnumerable<WorkflowDefinition>>.Ok(definitions));
         }
     }

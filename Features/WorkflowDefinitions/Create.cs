@@ -6,18 +6,11 @@ namespace ConfigurableWorkflowEngine.Features.WorkflowDefinitions;
 
 public static class Create
 {
-    public class Handler
+    public class Handler(IWorkflowService workflowService)
     {
-        private readonly IWorkflowService _workflowService;
-
-        public Handler(IWorkflowService workflowService)
-        {
-            _workflowService = workflowService;
-        }
-
         public async Task<IResult> HandleAsync(WorkflowDefinition definition)
         {
-            var (success, createdDefinition, errors) = await _workflowService.CreateDefinitionAsync(definition);
+            var (success, createdDefinition, errors) = await workflowService.CreateDefinitionAsync(definition);
 
             if (success)
             {

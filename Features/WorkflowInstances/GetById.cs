@@ -6,18 +6,11 @@ namespace ConfigurableWorkflowEngine.Features.WorkflowInstances;
 
 public static class GetById
 {
-    public class Handler
+    public class Handler(IWorkflowService workflowService)
     {
-        private readonly IWorkflowService _workflowService;
-
-        public Handler(IWorkflowService workflowService)
-        {
-            _workflowService = workflowService;
-        }
-
         public async Task<IResult> HandleAsync(string id)
         {
-            var instance = await _workflowService.GetInstanceAsync(id);
+            var instance = await workflowService.GetInstanceAsync(id);
 
             if (instance == null)
             {

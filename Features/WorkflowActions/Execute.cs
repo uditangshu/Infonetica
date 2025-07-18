@@ -7,18 +7,11 @@ namespace ConfigurableWorkflowEngine.Features.WorkflowActions;
 
 public static class Execute
 {
-    public class Handler
+    public class Handler(IWorkflowService workflowService)
     {
-        private readonly IWorkflowService _workflowService;
-
-        public Handler(IWorkflowService workflowService)
-        {
-            _workflowService = workflowService;
-        }
-
         public async Task<IResult> HandleAsync(string instanceId, ExecuteActionRequest request)
         {
-            var (success, updatedInstance, errors) = await _workflowService.ExecuteActionAsync(instanceId, request);
+            var (success, updatedInstance, errors) = await workflowService.ExecuteActionAsync(instanceId, request);
 
             if (success)
             {

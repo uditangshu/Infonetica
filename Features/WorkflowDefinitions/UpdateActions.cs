@@ -7,18 +7,11 @@ namespace ConfigurableWorkflowEngine.Features.WorkflowDefinitions;
 
 public static class UpdateActions
 {
-    public class Handler
+    public class Handler(IWorkflowService workflowService)
     {
-        private readonly IWorkflowService _workflowService;
-
-        public Handler(IWorkflowService workflowService)
-        {
-            _workflowService = workflowService;
-        }
-
         public async Task<IResult> HandleAsync(string id, UpdateActionsRequest request)
         {
-            var (success, updatedDefinition, errors) = await _workflowService.UpdateDefinitionActionsAsync(id, request);
+            var (success, updatedDefinition, errors) = await workflowService.UpdateDefinitionActionsAsync(id, request);
 
             if (success)
             {

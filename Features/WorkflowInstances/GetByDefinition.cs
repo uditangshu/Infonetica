@@ -6,18 +6,11 @@ namespace ConfigurableWorkflowEngine.Features.WorkflowInstances;
 
 public static class GetByDefinition
 {
-    public class Handler
+    public class Handler(IWorkflowService workflowService)
     {
-        private readonly IWorkflowService _workflowService;
-
-        public Handler(IWorkflowService workflowService)
-        {
-            _workflowService = workflowService;
-        }
-
         public async Task<IResult> HandleAsync(string definitionId)
         {
-            var instances = await _workflowService.GetInstancesByDefinitionAsync(definitionId);
+            var instances = await workflowService.GetInstancesByDefinitionAsync(definitionId);
             return Results.Ok(ApiResponse<IEnumerable<WorkflowInstance>>.Ok(instances));
         }
     }

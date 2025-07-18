@@ -7,18 +7,11 @@ namespace ConfigurableWorkflowEngine.Features.WorkflowInstances;
 
 public static class Create
 {
-    public class Handler
+    public class Handler(IWorkflowService workflowService)
     {
-        private readonly IWorkflowService _workflowService;
-
-        public Handler(IWorkflowService workflowService)
-        {
-            _workflowService = workflowService;
-        }
-
         public async Task<IResult> HandleAsync(CreateInstanceRequest request)
         {
-            var (success, createdInstance, errors) = await _workflowService.CreateInstanceAsync(request);
+            var (success, createdInstance, errors) = await workflowService.CreateInstanceAsync(request);
 
             if (success)
             {

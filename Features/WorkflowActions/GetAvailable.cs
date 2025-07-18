@@ -6,19 +6,12 @@ namespace ConfigurableWorkflowEngine.Features.WorkflowActions;
 
 public static class GetAvailable
 {
-    public class Handler
+    public class Handler(IWorkflowService workflowService)
     {
-        private readonly IWorkflowService _workflowService;
-
-        public Handler(IWorkflowService workflowService)
-        {
-            _workflowService = workflowService;
-        }
-
         public async Task<IResult> HandleAsync(string instanceId)
         {
-            var actions = await _workflowService.GetAvailableActionsAsync(instanceId);
-            return Results.Ok(ApiResponse<List<WorkflowAction>>.Ok(actions));
+            var actions = await workflowService.GetAvailableActionsAsync(instanceId);
+            return Results.Ok(ApiResponse<IEnumerable<WorkflowAction>>.Ok(actions));
         }
     }
 } 
