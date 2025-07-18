@@ -23,4 +23,4 @@ public static class WorkflowActionEndpoints
             .WithName("GetAvailableActions")
             .WithOpenApi();
     }
-} 
+}

@@ -12,4 +12,4 @@ public class ExecuteActionRequest
 
     [JsonPropertyName("comment")]
     public string? Comment { get; set; }
-} 
+}

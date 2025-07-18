@@ -1,0 +1,2 @@
+I have to add a incremental versioning to the workflow definition.
+I have to add a delete instance endpoint. (infact entire simple cruds endpoints)
