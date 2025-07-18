@@ -1,166 +1,147 @@
-using ConfigurableWorkflowEngine.Models.Entities;
-using ConfigurableWorkflowEngine.Core.Interfaces;
-using System.Collections.Concurrent;
 using System.Text.Json;
+using ConfigurableWorkflowEngine.Core.Interfaces;
+using ConfigurableWorkflowEngine.Models.Entities;
 
 namespace ConfigurableWorkflowEngine.Infrastructure.Repositories;
 
 public class InMemoryWorkflowRepository : IWorkflowRepository
 {
-    private readonly ConcurrentDictionary<string, WorkflowDefinition> _definitions = new();
-    private readonly ConcurrentDictionary<string, WorkflowInstance> _instances = new();
-    private readonly string _definitionsFile = "workflow-definitions.json";
-    private readonly string _instancesFile = "workflow-instances.json";
-    private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
+    private static readonly Dictionary<string, WorkflowDefinition> _definitions = new();
+    private static readonly Dictionary<string, WorkflowInstance> _instances = new();
+    private static readonly object _lock = new();
+
+    private const string DefinitionsFile = "workflow-definitions.json";
+    private const string InstancesFile = "workflow-instances.json";
 
     public InMemoryWorkflowRepository()
     {
-        // Load data from files on startup
-        Task.Run(async () => await LoadFromFileAsync()).Wait();
+        LoadDefinitions();
+        LoadInstances();
     }
 
     // Workflow Definitions
+    public Task CreateDefinitionAsync(WorkflowDefinition definition)
+    {
+        lock (_lock)
+        {
+            _definitions[definition.Id] = definition;
+        }
+        return SaveDefinitionsAsync();
+    }
+
     public Task<WorkflowDefinition?> GetDefinitionAsync(string id)
     {
-        _definitions.TryGetValue(id, out var definition);
-        return Task.FromResult(definition);
+        lock (_lock)
+        {
+            _definitions.TryGetValue(id, out var definition);
+            return Task.FromResult(definition);
+        }
     }
 
     public Task<IEnumerable<WorkflowDefinition>> GetAllDefinitionsAsync()
     {
-        return Task.FromResult(_definitions.Values.AsEnumerable());
-    }
-
-    public async Task<WorkflowDefinition> CreateDefinitionAsync(WorkflowDefinition definition)
-    {
-        _definitions[definition.Id] = definition;
-        await SaveToFileAsync();
-        return definition;
-    }
-
-    public async Task<WorkflowDefinition?> UpdateDefinitionAsync(string id, WorkflowDefinition definition)
-    {
-        if (_definitions.ContainsKey(id))
+        lock (_lock)
         {
-            _definitions[id] = definition;
-            await SaveToFileAsync();
-            return definition;
+            return Task.FromResult(_definitions.Values.AsEnumerable());
         }
-        return null;
     }
 
-    public async Task<bool> DeleteDefinitionAsync(string id)
+    public Task UpdateDefinitionAsync(WorkflowDefinition definition)
     {
-        var removed = _definitions.TryRemove(id, out _);
-        if (removed)
+        lock (_lock)
         {
-            await SaveToFileAsync();
+            _definitions[definition.Id] = definition;
         }
-        return removed;
+        return SaveDefinitionsAsync();
     }
 
     // Workflow Instances
+    public Task CreateInstanceAsync(WorkflowInstance instance)
+    {
+        lock (_lock)
+        {
+            _instances[instance.Id] = instance;
+        }
+        return SaveInstancesAsync();
+    }
+
     public Task<WorkflowInstance?> GetInstanceAsync(string id)
     {
-        _instances.TryGetValue(id, out var instance);
-        return Task.FromResult(instance);
+        lock (_lock)
+        {
+            _instances.TryGetValue(id, out var instance);
+            return Task.FromResult(instance);
+        }
     }
 
     public Task<IEnumerable<WorkflowInstance>> GetAllInstancesAsync()
     {
-        return Task.FromResult(_instances.Values.AsEnumerable());
+        lock (_lock)
+        {
+            return Task.FromResult(_instances.Values.AsEnumerable());
+        }
     }
 
     public Task<IEnumerable<WorkflowInstance>> GetInstancesByDefinitionAsync(string definitionId)
     {
-        var instances = _instances.Values.Where(i => i.DefinitionId == definitionId);
-        return Task.FromResult(instances);
-    }
-
-    public async Task<WorkflowInstance> CreateInstanceAsync(WorkflowInstance instance)
-    {
-        _instances[instance.Id] = instance;
-        await SaveToFileAsync();
-        return instance;
-    }
-
-    public async Task<WorkflowInstance?> UpdateInstanceAsync(string id, WorkflowInstance instance)
-    {
-        if (_instances.ContainsKey(id))
+        lock (_lock)
         {
-            _instances[id] = instance;
-            await SaveToFileAsync();
-            return instance;
-        }
-        return null;
-    }
-
-    public async Task<bool> DeleteInstanceAsync(string id)
-    {
-        var removed = _instances.TryRemove(id, out _);
-        if (removed)
-        {
-            await SaveToFileAsync();
-        }
-        return removed;
-    }
-
-    // Persistence
-    public async Task SaveToFileAsync()
-    {
-        try
-        {
-            // Save definitions
-            var definitionsJson = JsonSerializer.Serialize(_definitions.Values, _jsonOptions);
-            await File.WriteAllTextAsync(_definitionsFile, definitionsJson);
-
-            // Save instances
-            var instancesJson = JsonSerializer.Serialize(_instances.Values, _jsonOptions);
-            await File.WriteAllTextAsync(_instancesFile, instancesJson);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error saving to files: {ex.Message}");
+            var instances = _instances.Values.Where(i => i.DefinitionId == definitionId);
+            return Task.FromResult(instances);
         }
     }
 
-    public async Task LoadFromFileAsync()
+    public Task UpdateInstanceAsync(WorkflowInstance instance)
     {
-        try
+        lock (_lock)
         {
-            // Load definitions
-            if (File.Exists(_definitionsFile))
+            _instances[instance.Id] = instance;
+        }
+        return SaveInstancesAsync();
+    }
+
+    // Private helper methods
+    private void LoadDefinitions()
+    {
+        if (File.Exists(DefinitionsFile))
+        {
+            var json = File.ReadAllText(DefinitionsFile);
+            var definitions = JsonSerializer.Deserialize<Dictionary<string, WorkflowDefinition>>(json);
+            if (definitions != null)
             {
-                var definitionsJson = await File.ReadAllTextAsync(_definitionsFile);
-                var definitions = JsonSerializer.Deserialize<WorkflowDefinition[]>(definitionsJson);
-                if (definitions != null)
+                foreach (var kvp in definitions)
                 {
-                    _definitions.Clear();
-                    foreach (var definition in definitions)
-                    {
-                        _definitions[definition.Id] = definition;
-                    }
-                }
-            }
-
-            // Load instances
-            if (File.Exists(_instancesFile))
-            {
-                var instancesJson = await File.ReadAllTextAsync(_instancesFile);
-                var instances = JsonSerializer.Deserialize<WorkflowInstance[]>(instancesJson);
-                if (instances != null)
-                {
-                    _instances.Clear();
-                    foreach (var instance in instances)
-                    {
-                        _instances[instance.Id] = instance;
-                    }
+                    _definitions[kvp.Key] = kvp.Value;
                 }
             }
         }
-        catch (Exception ex)
+    }
+
+    private void LoadInstances()
+    {
+        if (File.Exists(InstancesFile))
         {
-            Console.WriteLine($"Error loading from files: {ex.Message}");
+            var json = File.ReadAllText(InstancesFile);
+            var instances = JsonSerializer.Deserialize<Dictionary<string, WorkflowInstance>>(json);
+            if (instances != null)
+            {
+                foreach (var kvp in instances)
+                {
+                    _instances[kvp.Key] = kvp.Value;
+                }
+            }
         }
+    }
+
+    private async Task SaveDefinitionsAsync()
+    {
+        var json = JsonSerializer.Serialize(_definitions, new JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(DefinitionsFile, json);
+    }
+
+    private async Task SaveInstancesAsync()
+    {
+        var json = JsonSerializer.Serialize(_instances, new JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(InstancesFile, json);
     }
 } 

@@ -1,2 +1,3 @@
-I have to add a incremental versioning to the workflow definition.
-I have to add a delete instance endpoint. (infact entire simple cruds endpoints)
+I have to add a incremental versioning to the workflow definition. (checked)   
+I have to add a delete instance endpoint. (infact entire simple cruds endpoints) (checked)
+Update the readme.md file to reflect the new changes to have the run commands

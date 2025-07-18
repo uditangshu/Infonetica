@@ -10,6 +10,12 @@ public class WorkflowInstance
     [JsonPropertyName("definitionId")]
     public required string DefinitionId { get; set; }
 
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
     [JsonPropertyName("currentState")]
     public required string CurrentState { get; set; }
 
@@ -28,23 +34,20 @@ public class WorkflowInstance
 
 public class HistoryEntry
 {
-    [JsonPropertyName("actionId")]
-    public required string ActionId { get; set; }
-
-    [JsonPropertyName("actionName")]
-    public required string ActionName { get; set; }
-
-    [JsonPropertyName("fromState")]
-    public required string FromState { get; set; }
-
-    [JsonPropertyName("toState")]
-    public required string ToState { get; set; }
+    [JsonPropertyName("stateId")]
+    public required string StateId { get; set; }
 
     [JsonPropertyName("timestamp")]
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
+    [JsonPropertyName("actionId")]
+    public string? ActionId { get; set; }
+
     [JsonPropertyName("executedBy")]
     public string? ExecutedBy { get; set; }
+
+    [JsonPropertyName("comment")]
+    public string? Comment { get; set; }
 }
 
 public enum WorkflowStatus

@@ -5,7 +5,6 @@ namespace ConfigurableWorkflowEngine.Services;
 
 public interface IWorkflowValidationService
 {
-    Task<(bool IsValid, List<ValidationError> Errors)> ValidateDefinitionAsync(WorkflowDefinition definition);
-    Task<(bool IsValid, List<ValidationError> Errors)> ValidateInstanceCreationAsync(string definitionId);
-    Task<(bool IsValid, List<ValidationError> Errors)> ValidateActionExecutionAsync(string instanceId, string actionId);
+    List<ValidationError> ValidateDefinition(WorkflowDefinition definition);
+    List<ValidationError> ValidateAction(WorkflowDefinition definition, WorkflowInstance instance, string actionId);
 } 

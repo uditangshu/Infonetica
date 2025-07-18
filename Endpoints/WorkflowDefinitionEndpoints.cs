@@ -1,5 +1,6 @@
 using ConfigurableWorkflowEngine.Features.WorkflowDefinitions;
 using ConfigurableWorkflowEngine.Models.Entities;
+using ConfigurableWorkflowEngine.Models.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConfigurableWorkflowEngine.Endpoints;
@@ -27,6 +28,18 @@ public static class WorkflowDefinitionEndpoints
         group.MapGet("/", async ([FromServices] GetAll.Handler handler) => 
             await handler.HandleAsync())
             .WithName("GetAllWorkflowDefinitions")
+            .WithOpenApi();
+
+        // Update states in a workflow definition (incremental)
+        group.MapPatch("/{id}/states", async (string id, UpdateStatesRequest request, [FromServices] UpdateStates.Handler handler) => 
+            await handler.HandleAsync(id, request))
+            .WithName("UpdateWorkflowDefinitionStates")
+            .WithOpenApi();
+
+        // Update actions in a workflow definition (incremental)
+        group.MapPatch("/{id}/actions", async (string id, UpdateActionsRequest request, [FromServices] UpdateActions.Handler handler) => 
+            await handler.HandleAsync(id, request))
+            .WithName("UpdateWorkflowDefinitionActions")
             .WithOpenApi();
     }
 } 

@@ -1,7 +1,9 @@
 using ConfigurableWorkflowEngine.Core.Interfaces;
 using ConfigurableWorkflowEngine.Infrastructure.Repositories;
 using ConfigurableWorkflowEngine.Services;
-using System.Reflection;
+using ConfigurableWorkflowEngine.Features.WorkflowDefinitions;
+using ConfigurableWorkflowEngine.Features.WorkflowInstances;
+using ConfigurableWorkflowEngine.Features.WorkflowActions;
 
 namespace ConfigurableWorkflowEngine.Extensions;
 
@@ -9,17 +11,27 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddWorkflowServices(this IServiceCollection services)
     {
-        // Register core services
+        // Core services
         services.AddSingleton<IWorkflowRepository, InMemoryWorkflowRepository>();
         services.AddScoped<IWorkflowService, WorkflowService>();
         services.AddScoped<IWorkflowValidationService, WorkflowValidationService>();
 
-        // Register all handlers from the Features assembly
-        services.Scan(scan => scan
-            .FromAssembly(Assembly.GetExecutingAssembly())
-            .AddClasses(classes => classes.InNamespaces("ConfigurableWorkflowEngine.Features"))
-            .AsSelfWithInterfaces()
-            .WithScopedLifetime());
+        // Definition handlers
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowDefinitions.Create.Handler>();
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowDefinitions.GetAll.Handler>();
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowDefinitions.GetById.Handler>();
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowDefinitions.UpdateStates.Handler>();
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowDefinitions.UpdateActions.Handler>();
+        
+        // Instance handlers
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowInstances.Create.Handler>();
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowInstances.GetAll.Handler>();
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowInstances.GetById.Handler>();
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowInstances.GetByDefinition.Handler>();
+        
+        // Action handlers
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowActions.Execute.Handler>();
+        services.AddScoped<ConfigurableWorkflowEngine.Features.WorkflowActions.GetAvailable.Handler>();
 
         return services;
     }
